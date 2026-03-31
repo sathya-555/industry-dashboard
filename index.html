@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Real-Time Industry Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { darkMode: 'class' }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 font-sans transition-colors duration-500">
+
+<!-- Header -->
+<header class="bg-white dark:bg-gray-800 shadow-md py-6 mb-6 transition-colors duration-500">
+  <div class="max-w-6xl mx-auto flex justify-between items-center px-4">
+    <div>
+      <h1 class="text-4xl font-bold text-gray-800 dark:text-gray-100">Industry Dashboard</h1>
+      <p class="text-gray-600 dark:text-gray-300 mt-1">Real-Time Data Insights for Decision Making</p>
+    </div>
+    <button id="toggleDark" class="bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded shadow hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-300">
+      Toggle Dark Mode
+    </button>
+  </div>
+</header>
+
+<!-- Filter -->
+<div class="max-w-6xl mx-auto px-4 mb-6 flex justify-end">
+  <label class="mr-2 font-medium text-gray-700 dark:text-gray-300" for="category">Filter Transactions:</label>
+  <select id="category" class="border rounded px-3 py-1 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600">
+    <option value="all">All</option>
+    <option value="sales">Sales</option>
+    <option value="marketing">Marketing</option>
+    <option value="finance">Finance</option>
+  </select>
+</div>
+
+<!-- Dashboard Cards -->
+<div class="max-w-6xl mx-auto px-4 grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+  <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow hover:shadow-lg transition-colors duration-300">
+    <h2 class="text-gray-600 dark:text-gray-300 font-semibold mb-2">Total Sales</h2>
+    <p class="text-2xl font-bold text-gray-800 dark:text-gray-100" id="totalSales">$0</p>
+  </div>
+  <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow hover:shadow-lg transition-colors duration-300">
+    <h2 class="text-gray-600 dark:text-gray-300 font-semibold mb-2">New Users</h2>
+    <p class="text-2xl font-bold text-gray-800 dark:text-gray-100" id="newUsers">0</p>
+  </div>
+  <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow hover:shadow-lg transition-colors duration-300">
+    <h2 class="text-gray-600 dark:text-gray-300 font-semibold mb-2">Revenue</h2>
+    <p class="text-2xl font-bold text-gray-800 dark:text-gray-100" id="revenue">$0</p>
+  </div>
+  <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow hover:shadow-lg transition-colors duration-300">
+    <h2 class="text-gray-600 dark:text-gray-300 font-semibold mb-2">Active Projects</h2>
+    <p class="text-2xl font-bold text-gray-800 dark:text-gray-100" id="projects">0</p>
+  </div>
+</div>
+
+<!-- Table & Chart -->
+<div class="max-w-6xl mx-auto px-4 grid gap-6 grid-cols-1 lg:grid-cols-2">
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 transition-colors duration-300">
+    <h2 class="text-gray-700 dark:text-gray-300 font-semibold mb-4 text-lg">Recent Transactions</h2>
+    <table class="min-w-full text-left border-collapse">
+      <thead class="bg-blue-600 dark:bg-blue-700 text-white">
+        <tr>
+          <th class="px-4 py-2">Order ID</th>
+          <th class="px-4 py-2">Customer</th>
+          <th class="px-4 py-2">Amount</th>
+          <th class="px-4 py-2">Status</th>
+        </tr>
+      </thead>
+      <tbody id="transactionTable"></tbody>
+    </table>
+  </div>
+
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 transition-colors duration-300">
+    <h2 class="text-gray-700 dark:text-gray-300 font-semibold mb-4 text-lg">Monthly Revenue</h2>
+    <canvas id="revenueChart"></canvas>
+  </div>
+</div>
+
+<script>
+  // Dark Mode Toggle
+  document.getElementById('toggleDark').addEventListener('click', ()=>{
+    document.documentElement.classList.toggle('dark');
+  });
+
+  // Live Counters with Random Increment
+  const counters = { totalSales:12450, newUsers:350, revenue:58200, projects:8 };
+  function animateCounter(id,value){
+    const el=document.getElementById(id);
+    el.textContent=id==='revenue'||id==='totalSales'?`$${value.toLocaleString()}`:value;
+  }
+  function updateCounters(){
+    counters.totalSales += Math.floor(Math.random()*50);
+    counters.newUsers += Math.floor(Math.random()*5);
+    counters.revenue += Math.floor(Math.random()*100);
+    counters.projects += Math.floor(Math.random()*1);
+    for(const key in counters){ animateCounter(key,counters[key]); }
+  }
+  setInterval(updateCounters, 3000); // update every 3s
+  updateCounters();
+
+  // Chart.js with dynamic update
+  const ctx=document.getElementById('revenueChart').getContext('2d');
+  const revenueChart=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:['Jan','Feb','Mar','Apr','May','Jun'],
+      datasets:[{label:'Revenue ($)',
+        data:[12000,15000,14000,17000,16000,18000],
+        borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,0.2)', fill:true, tension:0.3
+      }]
+    },
+    options:{responsive:true, plugins:{legend:{display:false}}}
+  });
+  function updateChart(){
+    const data = revenueChart.data.datasets[0].data;
+    for(let i=0;i<data.length;i++){
+      data[i] += Math.floor(Math.random()*500); // simulate revenue increase
+    }
+    revenueChart.update();
+  }
+  setInterval(updateChart, 5000); // update every 5s
+
+  // Transaction Table
+  const allData=[
+    {id:'001',customer:'Alice',amount:'$250',status:'Completed',category:'sales'},
+    {id:'002',customer:'Bob',amount:'$400',status:'Pending',category:'marketing'},
+    {id:'003',customer:'Charlie',amount:'$150',status:'Completed',category:'finance'},
+    {id:'004',customer:'David',amount:'$320',status:'Pending',category:'sales'},
+    {id:'005',customer:'Eva',amount:'$500',status:'Completed',category:'marketing'}
+  ];
+  const table=document.getElementById('transactionTable');
+  function populateTable(filter='all'){
+    table.innerHTML='';
+    const filtered=filter==='all'?allData:allData.filter(d=>d.category===filter);
+    filtered.forEach(d=>{
+      const tr=document.createElement('tr');
+      tr.className="hover:bg-gray-100 dark:hover:bg-gray-700";
+      tr.innerHTML=`<td class="px-4 py-2">${d.id}</td><td class="px-4 py-2">${d.customer}</td><td class="px-4 py-2">${d.amount}</td><td class="px-4 py-2">${d.status}</td>`;
+      table.appendChild(tr);
+    });
+  }
+  populateTable();
+  document.getElementById('category').addEventListener('change',function(){ populateTable(this.value); });
+</script>
+
+</body>
+</html>
